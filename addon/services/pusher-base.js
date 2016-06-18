@@ -29,7 +29,6 @@ export default Service.extend(Ember.Evented, Checker, {
   init() {
     this._super(...arguments);
     this.set('pusherKey', getOwner(this).resolveRegistration('config:environment').pusherKey);
-    this.setup();
   },
 
   willDestroy() {
