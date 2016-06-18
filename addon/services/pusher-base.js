@@ -1,9 +1,10 @@
 import Ember from 'ember';
 import Checker from 'ember-pusher-guru/mixins/checker';
 import { fetchEvents } from 'ember-pusher-guru/utils/extract-events';
+import { channelsDiff, removeChannel } from 'ember-pusher-guru/utils/channels-diff';
 import getOwner from 'ember-getowner-polyfill';
 
-const { get, computed, run, Logger, Service } = Ember;
+const { get, computed, run, Logger, Service, isArray } = Ember;
 const { bind } = run;
 const { error } = Logger;
 
@@ -40,8 +41,31 @@ export default Service.extend(Ember.Evented, Checker, {
   setup() {
     this.checkEnv();
     this.set('pusher', new Pusher(this.get('pusherKey'), this._findOptions()));
+    this._subscribeChannels(this.get('channelsData'));
+    this.get('pusher').connection.bind('connected', (err, res) => {
+      return this._connected();
+    });
+  },
 
-    this._setSubscriptionsEndEvents();
+  updateChannelsData(newChannelsData) {
+    this._checkDataStructure(newChannelsData);
+    this._manageChannelsChange(this.get('channelsData'), newChannelsData);
+  },
+
+  removeChannel(channelName) {
+    this._manageChannelsChange(
+      this.get('channelsData'),
+      removeChannel(this.get('channelsData'), channelName)
+    );
+  },
+
+  addChannelsData(newChannelsData) {
+    const channelData = this.get('channelsData');
+    this._checkDataStructure(newChannelsData);
+    const updatedChannelsData = isArray(newChannelsData) ?
+      [...channelData, ...newChannelsData] :
+      [...channelData, newChannelsData];
+    this._manageChannelsChange(channelData, updatedChannelsData);
   },
 
   _findOptions() {
@@ -66,15 +90,27 @@ export default Service.extend(Ember.Evented, Checker, {
    return options;
   },
 
-  _setSubscriptionsEndEvents() {
-    this.get('channelsData').forEach((singleChannel) => {
+  _manageChannelsChange(oldChannelsData, newChannelsData) {
+    const {
+      channelsToSubscribe,
+      channelsToUnsubscribe
+    } = channelsDiff(oldChannelsData, newChannelsData);
+    this._subscribeChannels(channelsToSubscribe);
+    this._unsubscribeChannels(channelsToUnsubscribe);
+  },
+
+  _subscribeChannels(channelsData) {
+    channelsData.forEach((singleChannel) => {
       const channelName = Object.keys(singleChannel)[0];
       const channel = this._addChannel(channelName);
-      this._attachEventsToChannel(channel, channelName);
+      this._attachEventsToChannel(channel, channelName, channelsData);
     });
+  },
 
-    this.get('pusher').connection.bind('connected', (err, res) => {
-      return this._connected();
+  _unsubscribeChannels(channelsData) {
+    const channels = channelsData.map(channel => Object.keys(channel)[0]);
+    channels.forEach((channel) => {
+      return this.get('pusher').unsubscribe(channel);
     });
   },
 
@@ -82,8 +118,8 @@ export default Service.extend(Ember.Evented, Checker, {
     return this.get('pusher').subscribe(name);
   },
 
-  _attachEventsToChannel(channel, channelName) {
-    const events = fetchEvents(this.get('channelsData'), channelName);
+  _attachEventsToChannel(channel, channelName, data) {
+    const events = fetchEvents(data, channelName);
     events.forEach((event) => {
       this._setEvent(channel, event);
     });

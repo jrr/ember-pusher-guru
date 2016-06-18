@@ -23,4 +23,8 @@ export default PusherBase.extend({
     // some dynamic authorization data that may be based on e.g. current user token
     return { someData: '123' };
   }),
+
+  init() {
+    this._super(...arguments);
+  }
 });

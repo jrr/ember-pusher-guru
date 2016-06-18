@@ -2,14 +2,24 @@
 import Ember from 'ember';
 import PusherInitializer from 'ember-pusher-guru/mixins/pusher-initializer';
 
-const { Route } = Ember;
+const { Route, inject: { service } } = Ember;
 
 export default Route.extend(PusherInitializer, {
+  pusher: service(),
+  message: null,
   pusherActions: [
     { swim: 'handleSwim' },
     { cover: 'handleCover' },
-    { electroshock: 'handleElectroshock' }
+    { electroshock: 'handleElectroshock' },
+    { new_event: 'handleNewEvent' }
   ],
+
+  init() {
+    this._super(...arguments);
+    this.get('pusher').addChannelsData(
+      { new_channel: ['new_event'] }
+    );
+  },
 
   handleCover(data) {
     Ember.$('#message').text(data.message);
@@ -18,6 +28,9 @@ export default Route.extend(PusherInitializer, {
     Ember.$('#message').text(data.message);
   },
   handleSwim(data) {
+    Ember.$('#message').text(data.message);
+  },
+  handleNewEvent(data) {
     Ember.$('#message').text(data.message);
   },
 
