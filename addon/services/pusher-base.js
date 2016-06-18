@@ -79,7 +79,7 @@ export default Service.extend(Ember.Evented, Checker, {
     if(endpoint) {
       options.authEndpoint = endpoint;
       options.encrypted = true;
-      options.auth = { params: this.get('authDataParams') };
+      options.auth = { params: this.get('authDataParams'), headers: this.get('authDataHeaders') };
       Ember.deprecate(
         'ember-pusher-guru: using `authEndpoint` outside `pusherConfig` is depreciated',
         true,
