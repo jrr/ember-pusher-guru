@@ -78,7 +78,6 @@ export default Service.extend(Ember.Evented, Checker, {
     const endpoint = this.get('authEndpoint');
     if(endpoint) {
       options.authEndpoint = endpoint;
-      options.authTransport = 'jsonp';
       options.encrypted = true;
       options.auth = { params: this.get('authDataParams') };
       Ember.deprecate(
