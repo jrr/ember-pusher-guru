@@ -96,8 +96,7 @@ export default Service.extend(Ember.Evented, Checker, {
   },
 
   _connected() {
-    this.set('socketId', this.get('pusher').connection.socket_id);
-    return this._addSocketIdToXHR();
+    return this.set('socketId', this.get('pusher').connection.socket_id);
   },
 
   _addSocketIdToXHR() {
