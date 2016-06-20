@@ -28,7 +28,6 @@ export default Service.extend(Ember.Evented, Checker, {
   init() {
     this._super(...arguments);
     this.set('pusherKey', getOwner(this).resolveRegistration('config:environment').pusherKey);
-    this.setup();
   },
 
   willDestroy() {
@@ -54,9 +53,8 @@ export default Service.extend(Ember.Evented, Checker, {
     const endpoint = this.get('authEndpoint');
     if(endpoint) {
       options.authEndpoint = endpoint;
-      options.authTransport = 'jsonp';
       options.encrypted = true;
-      options.auth = { params: this.get('authDataParams') };
+      options.auth = { params: this.get('authDataParams'), headers: this.get('authDataHeaders') };
       Ember.deprecate(
         'ember-pusher-guru: using `authEndpoint` outside `pusherConfig` is depreciated',
         true,
